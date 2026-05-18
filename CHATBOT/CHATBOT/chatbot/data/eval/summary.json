@@ -1,0 +1,59 @@
+{
+  "status": "ok",
+  "collection": "admission_chunks_dnc_2026",
+  "top_k": 5,
+  "retrieval_mode": "hybrid",
+  "hybrid_candidate_pool": 20,
+  "question_stats": {
+    "total": 52,
+    "in_scope": 42,
+    "out_of_scope": 10,
+    "manual_review": 20,
+    "by_intent": {
+      "admission_method": 6,
+      "campus_life": 2,
+      "career_support": 1,
+      "contact": 6,
+      "deadline": 1,
+      "digital_service": 4,
+      "major_catalog": 5,
+      "out_of_scope": 10,
+      "program_format": 4,
+      "scholarship": 3,
+      "score_policy": 8,
+      "tuition": 2
+    },
+    "by_difficulty": {
+      "easy": 15,
+      "hard": 20,
+      "medium": 17
+    }
+  },
+  "metrics": {
+    "recall_at_k": 0.9048,
+    "precision_at_1": 0.7381,
+    "citation_coverage": 1.0,
+    "noise_rate_top1": 0.1905,
+    "out_scope_safe_rate": 1.0,
+    "hard_recall_at_k": 0.7857
+  },
+  "thresholds": {
+    "recall_at_k": 0.8,
+    "precision_at_1": 0.6,
+    "citation_coverage": 1.0,
+    "noise_rate_top1_max": 0.2,
+    "out_scope_safe_rate": 1.0
+  },
+  "pass_fail": {
+    "recall_at_k": true,
+    "precision_at_1": true,
+    "citation_coverage": true,
+    "noise_rate_top1": true,
+    "out_scope_safe_rate": true
+  },
+  "overall_pass": true,
+  "artifacts": {
+    "results_jsonl": "D:\\AI\\Chat\\CHATBOT\\CHATBOT\\chatbot\\data\\eval\\retrieval_results.jsonl",
+    "errors_jsonl": "D:\\AI\\Chat\\CHATBOT\\CHATBOT\\chatbot\\data\\eval\\error_analysis.jsonl"
+  }
+}

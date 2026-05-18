@@ -1,0 +1,4 @@
+{"question_id": "Q014", "intent": "contact", "reason": "recall_miss", "question": "Email tuyển sinh của trường là gì?", "expected_keywords": ["tuyensinhdnc@nctu.edu.vn"], "abstain": false, "abstain_reason": "answerable"}
+{"question_id": "Q034", "intent": "digital_service", "reason": "recall_miss", "question": "Nộp hồ sơ online và được support 24/7 đúng không?", "expected_keywords": ["nộp hồ sơ trực tuyến", "hỗ trợ 24/7"], "abstain": false, "abstain_reason": "answerable"}
+{"question_id": "Q038", "intent": "contact", "reason": "recall_miss", "question": "Địa chỉ phòng tuyển sinh cụ thể nằm chỗ nào trong trường?", "expected_keywords": ["phòng c2-08", "khu c", "168, nguyễn văn cừ"], "abstain": false, "abstain_reason": "answerable"}
+{"question_id": "Q041", "intent": "program_format", "reason": "recall_miss", "question": "Trang có nhắc tới bậc thạc sĩ, tiến sĩ không?", "expected_keywords": ["thạc sĩ", "tiến sĩ"], "abstain": false, "abstain_reason": "answerable"}

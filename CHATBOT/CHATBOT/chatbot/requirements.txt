@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+numpy
+sentence-transformers
+google-genai
+openai
+neo4j
+python-dotenv
+qdrant-client
+langchain-community
+langchain-text-splitters
+jsonschema
