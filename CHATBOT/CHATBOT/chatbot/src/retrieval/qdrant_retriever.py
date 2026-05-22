@@ -112,21 +112,50 @@ def retrieve(question: str) -> dict[str, Any]:
             from pathlib import Path
             from sentence_transformers import util
 
-            chunks_file = Path(__file__).resolve().parents[2] / "data" / "processed" / "chunks" / "chunks.jsonl"
-            if not chunks_file.exists():
-                return {"config": cfg, "abstain": False, "reason": "no_chunks", "hits": [], "citations": [], "supporting_chunk_ids": []}
+            chunks_dir = Path(__file__).resolve().parents[2] / "data" / "processed" / "chunks"
+            chunks_file = chunks_dir / "chunks.jsonl"
+            legacy_file = chunks_dir / "chunks.legacy.jsonl"
 
             docs: list[dict[str, Any]] = []
-            with chunks_file.open("r", encoding="utf-8") as fh:
-                for line in fh:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    try:
-                        obj = json.loads(line)
-                    except Exception:
-                        continue
-                    docs.append(obj)
+            if chunks_file.exists():
+                with chunks_file.open("r", encoding="utf-8") as fh:
+                    for line in fh:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            obj = json.loads(line)
+                        except Exception:
+                            continue
+                        docs.append(obj)
+
+            if legacy_file.exists():
+                with legacy_file.open("r", encoding="utf-8") as fh:
+                    for line in fh:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            obj = json.loads(line)
+                        except Exception:
+                            continue
+
+                        content = obj.get("content")
+                        if not content:
+                            continue
+
+                        metadata = obj.get("metadata") or {}
+                        docs.append(
+                            {
+                                "chunk_id": obj.get("id"),
+                                "doc_id": metadata.get("source") or "legacy_pdf",
+                                "chunk_text": content,
+                                "citations": [],
+                            }
+                        )
+
+            if not docs:
+                return {"config": cfg, "abstain": False, "reason": "no_chunks", "hits": [], "citations": [], "supporting_chunk_ids": []}
 
             texts = [d.get("chunk_text") or d.get("content", "") for d in docs]
             if not texts:
