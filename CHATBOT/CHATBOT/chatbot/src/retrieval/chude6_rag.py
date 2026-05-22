@@ -92,6 +92,8 @@ def _expand_major_aliases(user_query_norm: str) -> list[str]:
         aliases.append("khoahocmaytinh")
     if "ai" in q.split() or "tritue" in q.replace(" ", ""):
         aliases.append("trituenhantao")
+    if "y khoa" in q or "nganh y" in q or "y duoc" in q:
+        aliases.append("ykhoa")
 
     # Also include tokens from query itself.
     tokens = [t for t in q.split() if len(t) > 2 and t not in RETRIEVAL_STOPWORDS]
@@ -174,6 +176,8 @@ def fee_lookup_from_legacy_pdf(user_query: str) -> str:
                     label = "Khoa học máy tính"
                 elif "trituenhantao" in norm_line:
                     label = "Trí tuệ nhân tạo"
+                elif "ykhoa" in norm_line or "y khoa" in line.lower():
+                    label = "Y khoa"
                 return (
                     f"Học phí {label} theo bảng học phí trong dữ liệu: {amount} VND/tín chỉ. "
                     "Nếu bạn muốn mình ước tính theo học kỳ, cho mình biết bạn học khoảng bao nhiêu tín chỉ/kỳ nhé."
@@ -215,6 +219,7 @@ def legacy_fact_lookup(user_query: str) -> str:
     wants_address = "dia chi" in q or "o dau" in q or "dia diem" in q
     wants_code = "ma truong" in q or "ma so truong" in q
     wants_name = "ten truong" in q or "truong ten gi" in q
+    wants_total_majors = "bao nhieu nganh" in q or "so nganh" in q
 
     if not (wants_address or wants_code or wants_name):
         return ""
@@ -250,6 +255,11 @@ def legacy_fact_lookup(user_query: str) -> str:
         value = find_line("dia chi")
         if value:
             return f"Địa chỉ: {value}"
+
+    if wants_total_majors:
+        value = find_line("tong so nganh")
+        if value:
+            return f"Tổng số ngành: {value}"
 
     return ""
 
