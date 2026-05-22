@@ -91,15 +91,68 @@ def query_qdrant(client: Any, collection: str, vector: list[float], limit: int) 
 def retrieve(question: str) -> dict[str, Any]:
     cfg = get_config()
     embedder = get_embedder()
-    client = get_qdrant_client()
+    # Try to use a remote Qdrant instance. If unavailable, fall back to a
+    # lightweight local retrieval over processed chunk files so the API still
+    # works on environments (like HF Spaces) where Qdrant isn't running.
+    try:
+        client = get_qdrant_client()
+        vector = embedder.encode([question], normalize_embeddings=True)[0].tolist()
 
-    vector = embedder.encode([question], normalize_embeddings=True)[0].tolist()
+        candidate_limit = cfg.top_k
+        if cfg.retrieval_mode == "hybrid":
+            candidate_limit = max(cfg.top_k, cfg.hybrid_candidate_pool)
 
-    candidate_limit = cfg.top_k
-    if cfg.retrieval_mode == "hybrid":
-        candidate_limit = max(cfg.top_k, cfg.hybrid_candidate_pool)
+        hits = query_qdrant(client, cfg.collection, vector, candidate_limit)
+    except Exception:
+        # Local fallback: load processed chunks and do an in-memory semantic
+        # search using the same embedder. This avoids requiring Qdrant for
+        # simple deployments (note: performance and scale are limited).
+        try:
+            import json
+            from pathlib import Path
+            from sentence_transformers import util
 
-    hits = query_qdrant(client, cfg.collection, vector, candidate_limit)
+            chunks_file = Path(__file__).resolve().parents[2] / "data" / "processed" / "chunks" / "chunks.jsonl"
+            if not chunks_file.exists():
+                return {"config": cfg, "abstain": False, "reason": "no_chunks", "hits": [], "citations": [], "supporting_chunk_ids": []}
+
+            docs: list[dict[str, Any]] = []
+            with chunks_file.open("r", encoding="utf-8") as fh:
+                for line in fh:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        obj = json.loads(line)
+                    except Exception:
+                        continue
+                    docs.append(obj)
+
+            texts = [d.get("content", "") for d in docs]
+            if not texts:
+                return {"config": cfg, "abstain": False, "reason": "no_chunks", "hits": [], "citations": [], "supporting_chunk_ids": []}
+
+            q_emb = embedder.encode([question], normalize_embeddings=True)
+            kb_emb = embedder.encode(texts, convert_to_tensor=True)
+            sims = util.cos_sim(q_emb, kb_emb)[0].cpu().tolist()
+
+            # build hit-like objects
+            candidates = []
+            for i, score in enumerate(sims):
+                payload = {
+                    "chunk_id": docs[i].get("id"),
+                    "doc_id": docs[i].get("doc_id") or docs[i].get("source"),
+                    "chunk_text": texts[i],
+                    "citations": docs[i].get("citations") or [],
+                }
+                candidates.append({"payload": payload, "score": float(score), "id": docs[i].get("id")})
+
+            # sort and limit
+            candidates = sorted(candidates, key=lambda x: x.get("score", 0.0), reverse=True)
+            candidate_limit = cfg.top_k if cfg.retrieval_mode != "hybrid" else max(cfg.top_k, cfg.hybrid_candidate_pool)
+            hits = candidates[:candidate_limit]
+        except Exception:
+            return {"config": cfg, "abstain": False, "reason": "fallback_failed", "hits": [], "citations": [], "supporting_chunk_ids": []}
 
     candidates: list[dict[str, Any]] = []
     for hit in hits:
