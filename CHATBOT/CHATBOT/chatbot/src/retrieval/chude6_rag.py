@@ -241,6 +241,19 @@ def legacy_fact_lookup(user_query: str) -> str:
                     return line
         return ""
 
+    def find_address_fallback() -> str:
+        # Heuristic: match a line with Nguyen Van Cu + Can Tho + digits.
+        for chunk in chunks:
+            for raw_line in chunk.splitlines():
+                line = raw_line.strip()
+                if not line:
+                    continue
+                norm_line = normalize_text(line)
+                if "nguyen van cu" in norm_line and "can tho" in norm_line:
+                    if any(ch.isdigit() for ch in line):
+                        return line
+        return ""
+
     if wants_name:
         value = find_line("ten truong")
         if value:
@@ -255,6 +268,9 @@ def legacy_fact_lookup(user_query: str) -> str:
         value = find_line("dia chi")
         if value:
             return f"Địa chỉ: {value}"
+        fallback = find_address_fallback()
+        if fallback:
+            return f"Địa chỉ: {fallback}"
 
     if wants_total_majors:
         value = find_line("tong so nganh")
