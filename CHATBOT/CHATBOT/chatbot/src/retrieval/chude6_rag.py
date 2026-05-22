@@ -245,6 +245,14 @@ def legacy_fact_lookup(user_query: str) -> str:
                     return line
         return ""
 
+    def find_regex(pattern: str) -> str:
+        rx = re.compile(pattern, flags=re.IGNORECASE)
+        for chunk in chunks:
+            match = rx.search(chunk)
+            if match:
+                return match.group(1).strip()
+        return ""
+
     def find_address_fallback() -> str:
         # Heuristic: match a line with Nguyen Van Cu + Can Tho + digits.
         for chunk in chunks:
@@ -268,17 +276,23 @@ def legacy_fact_lookup(user_query: str) -> str:
         return ""
 
     if wants_name:
-        value = find_line("ten truong")
+        value = find_regex(r"(?:ten\s*truong|tên\s*trường)\s*[:：]\s*([^\n]+)")
+        if not value:
+            value = find_line("ten truong")
         if value:
             return f"Tên trường: {value}"
 
     if wants_code:
-        value = find_line("ma truong")
+        value = find_regex(r"(?:ma\s*truong|mã\s*trường)\s*[:：]\s*([^\n]+)")
+        if not value:
+            value = find_line("ma truong")
         if value:
             return f"Mã trường: {value}"
 
     if wants_address:
-        value = find_line("dia chi")
+        value = find_regex(r"(?:dia\s*chi|địa\s*chỉ)\s*[:：]\s*([^\n]+)")
+        if not value:
+            value = find_line("dia chi")
         if value:
             return f"Địa chỉ: {value}"
         fallback = find_address_fallback()
