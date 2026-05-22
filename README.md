@@ -129,4 +129,8 @@ Ghi chu:
 ## Demo app online (Hugging Face)
 
 - UI: https://lunhutlinh-ai-chatbot.hf.space/ui
+<<<<<<< HEAD
 - API: https://lunhutlinh-ai-chatbot.hf.space/chude6/chat
+=======
+- API: https://lunhutlinh-ai-chatbot.hf.space/chude6/chat
+>>>>>>> 84e64528 (Update README with web features)
