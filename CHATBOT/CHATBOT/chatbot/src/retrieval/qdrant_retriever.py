@@ -128,7 +128,7 @@ def retrieve(question: str) -> dict[str, Any]:
                         continue
                     docs.append(obj)
 
-            texts = [d.get("content", "") for d in docs]
+            texts = [d.get("chunk_text") or d.get("content", "") for d in docs]
             if not texts:
                 return {"config": cfg, "abstain": False, "reason": "no_chunks", "hits": [], "citations": [], "supporting_chunk_ids": []}
 
@@ -140,12 +140,13 @@ def retrieve(question: str) -> dict[str, Any]:
             candidates = []
             for i, score in enumerate(sims):
                 payload = {
-                    "chunk_id": docs[i].get("id"),
+                    "chunk_id": docs[i].get("chunk_id") or docs[i].get("id"),
                     "doc_id": docs[i].get("doc_id") or docs[i].get("source"),
                     "chunk_text": texts[i],
                     "citations": docs[i].get("citations") or [],
                 }
-                candidates.append({"payload": payload, "score": float(score), "id": docs[i].get("id")})
+                point_id = docs[i].get("chunk_id") or docs[i].get("id")
+                candidates.append({"payload": payload, "score": float(score), "id": point_id})
 
             # sort and limit
             candidates = sorted(candidates, key=lambda x: x.get("score", 0.0), reverse=True)
