@@ -266,13 +266,39 @@ def legacy_fact_lookup(user_query: str) -> str:
                         return line
         return ""
 
-    def find_section_excerpt(title_marker: str, max_lines: int = 6) -> str:
+    def _is_section_header(line_norm: str) -> bool:
+        # Stop when reaching another major section header.
+        if re.match(r"^[ivx]+\.?\s", line_norm):
+            return True
+        return any(
+            k in line_norm
+            for k in [
+                "doi tuong",
+                "phuong thuc xet tuyen",
+                "nguong dam bao",
+                "co so vat chat",
+                "danh muc nganh",
+                "chi tieu tuyen sinh",
+            ]
+        )
+
+    def find_section_excerpt(title_marker: str, max_lines: int = 8) -> str:
         for chunk in chunks:
             lines = [ln.strip() for ln in chunk.splitlines() if ln.strip()]
             for idx, line in enumerate(lines):
                 if title_marker in normalize_text(line):
-                    excerpt = lines[idx: idx + max_lines]
-                    return "\n".join(excerpt)
+                    collected: list[str] = []
+                    # Skip the header line, collect following content lines.
+                    for next_line in lines[idx + 1 :]:
+                        norm_next = normalize_text(next_line)
+                        if _is_section_header(norm_next):
+                            break
+                        collected.append(next_line)
+                        if len(collected) >= max_lines:
+                            break
+                    if collected:
+                        return "\n".join(collected)
+                    return line
         return ""
 
     if wants_name:
