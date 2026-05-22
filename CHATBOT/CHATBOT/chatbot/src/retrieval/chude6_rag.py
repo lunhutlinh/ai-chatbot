@@ -298,8 +298,12 @@ def legacy_fact_lookup(user_query: str) -> str:
                             break
                     if collected:
                         return "\n".join(collected)
-                    return line
+                    return ""
         return ""
+
+    def extract_from_legacy() -> str:
+        # Use the generic extractive matcher over all legacy chunks.
+        return extractive_answer(user_query, chunks)
 
     if wants_name:
         value = find_regex(r"(?:ten\s*truong|tên\s*trường)\s*[:：]\s*([^\n]+)")
@@ -334,21 +338,33 @@ def legacy_fact_lookup(user_query: str) -> str:
         excerpt = find_section_excerpt("doi tuong")
         if excerpt:
             return f"Đối tượng & điều kiện dự tuyển (trích):\n{excerpt}"
+        extracted = extract_from_legacy()
+        if extracted:
+            return f"Đối tượng & điều kiện dự tuyển (trích):\n{extracted}"
 
     if wants_methods:
         excerpt = find_section_excerpt("phuong thuc xet tuyen")
         if excerpt:
             return f"Phương thức xét tuyển (trích):\n{excerpt}"
+        extracted = extract_from_legacy()
+        if extracted:
+            return f"Phương thức xét tuyển (trích):\n{extracted}"
 
     if wants_threshold:
         excerpt = find_section_excerpt("nguong dam bao")
         if excerpt:
             return f"Ngưỡng đảm bảo chất lượng (trích):\n{excerpt}"
+        extracted = extract_from_legacy()
+        if extracted:
+            return f"Ngưỡng đảm bảo chất lượng (trích):\n{extracted}"
 
     if wants_facilities:
         excerpt = find_section_excerpt("co so vat chat")
         if excerpt:
             return f"Cơ sở vật chất (trích):\n{excerpt}"
+        extracted = extract_from_legacy()
+        if extracted:
+            return f"Cơ sở vật chất (trích):\n{extracted}"
 
     return ""
 
