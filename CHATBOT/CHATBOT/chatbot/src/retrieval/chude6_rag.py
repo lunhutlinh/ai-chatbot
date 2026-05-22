@@ -181,6 +181,78 @@ def fee_lookup_from_legacy_pdf(user_query: str) -> str:
 
     return ""
 
+
+@lru_cache(maxsize=1)
+def _load_legacy_chunks_all() -> list[str]:
+    if not LEGACY_CHUNKS_FILE.exists():
+        return []
+
+    texts: list[str] = []
+    try:
+        with LEGACY_CHUNKS_FILE.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = __import__("json").loads(line)
+                except Exception:
+                    continue
+                if not isinstance(obj, dict):
+                    continue
+                content = obj.get("content")
+                if isinstance(content, str) and content.strip():
+                    texts.append(content)
+    except Exception:
+        return []
+
+    return texts
+
+
+def legacy_fact_lookup(user_query: str) -> str:
+    q = normalize_text(user_query)
+
+    wants_address = "dia chi" in q or "o dau" in q or "dia diem" in q
+    wants_code = "ma truong" in q or "ma so truong" in q
+    wants_name = "ten truong" in q or "truong ten gi" in q
+
+    if not (wants_address or wants_code or wants_name):
+        return ""
+
+    chunks = _load_legacy_chunks_all()
+    if not chunks:
+        return ""
+
+    def find_line(marker: str) -> str:
+        for chunk in chunks:
+            for raw_line in chunk.splitlines():
+                line = raw_line.strip()
+                if not line:
+                    continue
+                norm_line = normalize_text(line)
+                if marker in norm_line:
+                    if ":" in line:
+                        return line.split(":", 1)[1].strip()
+                    return line
+        return ""
+
+    if wants_name:
+        value = find_line("ten truong")
+        if value:
+            return f"Tên trường: {value}"
+
+    if wants_code:
+        value = find_line("ma truong")
+        if value:
+            return f"Mã trường: {value}"
+
+    if wants_address:
+        value = find_line("dia chi")
+        if value:
+            return f"Địa chỉ: {value}"
+
+    return ""
+
 # ==============================
 # 📂 LOAD DATA
 # ==============================

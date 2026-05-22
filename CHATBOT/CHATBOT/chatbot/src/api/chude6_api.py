@@ -9,6 +9,7 @@ from src.retrieval.chude6_rag import (
     answer_from_retrieved_context,
     chatbot_rag_response,
     fee_lookup_from_legacy_pdf,
+    legacy_fact_lookup,
     load_data,
     build_vector_db,
     supporting_snippet_from_context,
@@ -235,6 +236,27 @@ def _should_append_graph_reply(message: str, triples: list[dict[str, str]]) -> b
 @router.post("/chat")
 def chat(req: ChatRequest):
     retrieval = None
+
+    fact_reply = legacy_fact_lookup(req.message)
+    if fact_reply:
+        return {
+            "reply": fact_reply,
+            "_debug": {
+                "rag_reply": fact_reply,
+                "graph_reply": "",
+                "graph_connected": neo4j_service.connected,
+                "graph_results": [],
+                "retrieval": {
+                    "mode": "local_fact_lookup",
+                    "abstain": None,
+                    "reason": "legacy_fact_lookup",
+                    "citations": [],
+                    "supporting_chunk_ids": [],
+                    "top_k": None,
+                    "collection": None,
+                },
+            },
+        }
 
     # High-precision override for tuition questions (from bundled hoc-phi.pdf legacy chunks).
     fee_answer = fee_lookup_from_legacy_pdf(req.message)
