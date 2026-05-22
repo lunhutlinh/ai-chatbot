@@ -220,6 +220,10 @@ def legacy_fact_lookup(user_query: str) -> str:
     wants_code = "ma truong" in q or "ma so truong" in q
     wants_name = "ten truong" in q or "truong ten gi" in q
     wants_total_majors = "bao nhieu nganh" in q or "so nganh" in q
+    wants_objects = "doi tuong" in q or "dieu kien" in q or "du tuyen" in q
+    wants_methods = "phuong thuc xet tuyen" in q or "xet tuyen" in q
+    wants_threshold = "nguong dam bao" in q or "nguong" in q
+    wants_facilities = "co so vat chat" in q or "co so" in q or "vat chat" in q
 
     if not (wants_address or wants_code or wants_name):
         return ""
@@ -254,6 +258,15 @@ def legacy_fact_lookup(user_query: str) -> str:
                         return line
         return ""
 
+    def find_section_excerpt(title_marker: str, max_lines: int = 6) -> str:
+        for chunk in chunks:
+            lines = [ln.strip() for ln in chunk.splitlines() if ln.strip()]
+            for idx, line in enumerate(lines):
+                if title_marker in normalize_text(line):
+                    excerpt = lines[idx: idx + max_lines]
+                    return "\n".join(excerpt)
+        return ""
+
     if wants_name:
         value = find_line("ten truong")
         if value:
@@ -276,6 +289,26 @@ def legacy_fact_lookup(user_query: str) -> str:
         value = find_line("tong so nganh")
         if value:
             return f"Tổng số ngành: {value}"
+
+    if wants_objects:
+        excerpt = find_section_excerpt("doi tuong")
+        if excerpt:
+            return f"Đối tượng & điều kiện dự tuyển (trích):\n{excerpt}"
+
+    if wants_methods:
+        excerpt = find_section_excerpt("phuong thuc xet tuyen")
+        if excerpt:
+            return f"Phương thức xét tuyển (trích):\n{excerpt}"
+
+    if wants_threshold:
+        excerpt = find_section_excerpt("nguong dam bao")
+        if excerpt:
+            return f"Ngưỡng đảm bảo chất lượng (trích):\n{excerpt}"
+
+    if wants_facilities:
+        excerpt = find_section_excerpt("co so vat chat")
+        if excerpt:
+            return f"Cơ sở vật chất (trích):\n{excerpt}"
 
     return ""
 
